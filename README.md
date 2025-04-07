@@ -104,3 +104,176 @@ Once the application is running, you can access:
 - Implement authentication in the extension
 - Add context menu integration
 - Build a popup interface for quick actions
+
+# Nibblify Setup Guide
+
+## Prerequisites
+
+- Python 3.9+
+- PostgreSQL 14+
+- Node.js and npm (for frontend)
+- Elasticsearch 8.x
+
+## Initial Setup
+
+### 1. Database Setup
+
+PostgreSQL needs to be installed and running. On macOS:
+
+```bash
+# Install PostgreSQL (if not already installed)
+brew install postgresql@14
+
+# Start PostgreSQL service
+brew services start postgresql@14
+
+# Create postgres superuser (if not exists)
+createuser -s postgres
+
+# Create database (if not exists)
+createdb -U postgres nibblify
+```
+
+### 2. Environment Configuration
+
+Create a `.env` file in the root directory with the following configuration:
+
+```env
+# Database settings
+POSTGRES_SERVER=localhost
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=nibblify
+
+# Elasticsearch settings
+ELASTICSEARCH_URL=http://localhost:9200
+ELASTICSEARCH_HOST=localhost
+ELASTICSEARCH_PORT=9200
+
+# JWT Settings
+SECRET_KEY=your-secret-key-here
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=11520
+
+# First superuser
+FIRST_SUPERUSER=admin@example.com
+FIRST_SUPERUSER_PASSWORD=admin123
+
+# CORS settings
+BACKEND_CORS_ORIGINS=["http://localhost","http://localhost:8080","http://localhost:3000"]
+```
+
+### 3. Elasticsearch Setup
+
+1. Install and start Elasticsearch:
+```bash
+# Install Elasticsearch
+brew install elasticsearch
+
+# Start Elasticsearch service
+brew services start elasticsearch
+```
+
+2. Verify Elasticsearch is running:
+```bash
+curl http://localhost:9200
+```
+
+3. If you get SSL/HTTPS errors, modify elasticsearch.yml:
+```yaml
+xpack.security.enabled: false
+xpack.security.http.ssl.enabled: false
+```
+
+### 4. Backend Setup
+
+1. Initialize the database:
+```bash
+# Initialize database schema and create initial superuser
+python3 -c "from app.db.init_db import init_db; from app.db.session import SessionLocal; init_db(SessionLocal())"
+```
+
+2. Start the FastAPI backend:
+```bash
+uvicorn app.main:app --reload
+```
+
+### 5. Frontend Setup
+
+1. Install dependencies:
+```bash
+cd frontend
+npm install
+```
+
+2. Start the development server:
+```bash
+npm start
+```
+
+## Common Issues and Troubleshooting
+
+### 1. Database Connection Issues
+
+If you see errors like "role 'postgres' does not exist":
+```bash
+# Create the postgres superuser
+createuser -s postgres
+```
+
+If database connection fails:
+- Verify PostgreSQL is running: `brew services list | grep postgresql`
+- Check database exists: `psql -U postgres -l`
+- Verify credentials in .env match your PostgreSQL setup
+
+### 2. Elasticsearch Issues
+
+If you get SSL/HTTPS errors:
+1. Stop Elasticsearch: `brew services stop elasticsearch`
+2. Edit `/usr/local/etc/elasticsearch/elasticsearch.yml`
+3. Add or modify:
+   ```yaml
+   xpack.security.enabled: false
+   xpack.security.http.ssl.enabled: false
+   ```
+4. Start Elasticsearch: `brew services start elasticsearch`
+
+### 3. Authentication Issues
+
+If you get 500 errors during login:
+1. Verify database is initialized
+2. Check if tables are created: `psql -U postgres nibblify -c "\dt"`
+3. Verify superuser exists in database
+4. Default superuser credentials:
+   - Email: admin@example.com
+   - Password: admin123
+
+### 4. CORS Issues
+
+If you get CORS errors:
+1. Verify BACKEND_CORS_ORIGINS in .env includes your frontend URL
+2. Check if frontend is making requests to correct backend URL
+3. Verify API_V1_STR prefix is being used correctly
+
+## API Documentation
+
+Once the server is running, you can access:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## Development Tips
+
+1. Use the logging endpoints for debugging
+2. Check both frontend console and backend logs for errors
+3. Use the Swagger UI to test API endpoints directly
+4. Monitor Elasticsearch logs for indexing issues
+
+## Security Notes
+
+For production deployment:
+1. Change default superuser credentials
+2. Use strong SECRET_KEY
+3. Configure proper SSL/TLS
+4. Set up proper authentication for Elasticsearch
+5. Configure proper CORS settings
+6. Use environment-specific .env files
