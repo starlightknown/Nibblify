@@ -38,6 +38,14 @@ const App: React.FC = () => {
                     </PrivateRoute>
                   }
                 />
+                <Route
+                  path="/documents/:id/edit"
+                  element={
+                    <PrivateRoute>
+                      <DocumentForm />
+                    </PrivateRoute>
+                  }
+                />
                 <Route path="/" element={<Login />} />
               </Routes>
             </main>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import documentsApi, { Document, CreateDocumentInput, UpdateDocumentInput } from '../../api/documents';
 
 const DocumentForm: React.FC = () => {
@@ -11,22 +11,20 @@ const DocumentForm: React.FC = () => {
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
 
+  // Fetch document data if editing
+  const { data: document, isLoading } = useQuery<Document>({
+    queryKey: ['document', id],
+    queryFn: () => documentsApi.getById(id!),
+    enabled: !!id, // Only run the query if we have an ID
+  });
+
+  // Update form when document data is loaded
   useEffect(() => {
-    if (id) {
-      // Fetch document data if editing
-      documentsApi.getById(id)
-        .then((document: Document) => {
-          if (document) {
-            setTitle(document.title);
-            setContent(document.content);
-          }
-        })
-        .catch((err: Error) => {
-          setError('Error loading document');
-          console.error(err);
-        });
+    if (document) {
+      setTitle(document.title);
+      setContent(document.content);
     }
-  }, [id]);
+  }, [document]);
 
   const createMutation = useMutation({
     mutationFn: (data: CreateDocumentInput) => documentsApi.create(data),
@@ -43,6 +41,7 @@ const DocumentForm: React.FC = () => {
     mutationFn: (data: UpdateDocumentInput) => documentsApi.update(id!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['document', id] });
       navigate('/documents');
     },
     onError: (err: Error) => {
@@ -70,6 +69,14 @@ const DocumentForm: React.FC = () => {
       createMutation.mutate(documentData);
     }
   };
+
+  if (id && isLoading) {
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <div className="text-center py-4">Loading document...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -119,7 +126,7 @@ const DocumentForm: React.FC = () => {
             disabled={createMutation.isPending || updateMutation.isPending}
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
-            {id ? 'Update' : 'Create'}
+            {createMutation.isPending || updateMutation.isPending ? 'Saving...' : (id ? 'Update' : 'Create')}
           </button>
         </div>
       </form>
