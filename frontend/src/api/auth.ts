@@ -26,16 +26,23 @@ export interface AuthResponse {
 
 const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const formData = new FormData();
-    formData.append('username', credentials.username);
-    formData.append('password', credentials.password);
-    
-    const response = await client.post<AuthResponse>('/auth/login/access-token', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
-    return response.data;
+    try {
+      console.log('Sending login request with credentials:', credentials);
+      const params = new URLSearchParams();
+      params.append('username', credentials.username);
+      params.append('password', credentials.password);
+      
+      const response = await client.post<AuthResponse>('/auth/login/access-token', params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+      console.log('Login response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Login request failed:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
   register: async (credentials: RegisterCredentials): Promise<User> => {
@@ -44,8 +51,15 @@ const authApi = {
   },
 
   getCurrentUser: async (): Promise<User> => {
-    const response = await client.get<User>('/auth/me');
-    return response.data;
+    try {
+      console.log('Fetching current user');
+      const response = await client.get<User>('/auth/me');
+      console.log('Current user response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to fetch current user:', error.response?.data || error.message);
+      throw error;
+    }
   },
 
   logout: () => {

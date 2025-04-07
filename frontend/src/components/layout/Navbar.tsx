@@ -1,31 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import authApi, { User } from '../../api/auth';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const currentUser = await authApi.getCurrentUser();
-        setUser(currentUser);
-        setIsAuthenticated(true);
-      } catch (error) {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
+  const { user, isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
-    authApi.logout();
-    setUser(null);
-    setIsAuthenticated(false);
+    logout();
     navigate('/login');
   };
 

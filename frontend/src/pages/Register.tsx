@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import authApi, { RegisterCredentials, User } from '../api/auth';
+import authApi, { RegisterCredentials } from '../api/auth';
+import { useAuth } from '../context/AuthContext';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,25 +14,26 @@ const Register: React.FC = () => {
 
   const registerMutation = useMutation({
     mutationFn: (credentials: RegisterCredentials) => authApi.register(credentials),
-    onSuccess: (user: User) => {
-      // Store the user data
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      // Now login to get the token
-      authApi.login({ username: email, password })
-        .then(data => {
-          localStorage.setItem('token', data.access_token);
-          navigate('/documents');
-        })
-        .catch(err => {
-          console.error('Error logging in after registration:', err);
-          setError('Registration successful but login failed');
-        });
+    onSuccess: async (user) => {
+      try {
+        // After successful registration, log in the user
+        const data = await authApi.login({ username: email, password });
+        login(data.access_token, user);
+        navigate('/documents');
+      } catch (err) {
+        console.error('Error logging in after registration:', err);
+        setError('Registration successful but login failed');
+      }
     },
     onError: (err: any) => {
       setError(err.message || 'Registration failed');
     }
   });
+
+  // If already authenticated, redirect to documents page
+  if (isAuthenticated) {
+    return <Navigate to="/documents" replace />;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
