@@ -49,4 +49,13 @@ def register_user(
             detail="The user with this email already exists in the system.",
         )
     user = crud.user.create(db, obj_in=user_in)
-    return user 
+    return user
+
+@router.get("/me", response_model=schemas.User)
+def read_users_me(
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get current user.
+    """
+    return current_user 

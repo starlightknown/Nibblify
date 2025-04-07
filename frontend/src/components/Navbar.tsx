@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import authApi, { User } from '../../api/auth';
+import authApi, { User } from '../api/auth';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -53,10 +53,12 @@ const Navbar: React.FC = () => {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <span className="text-gray-700">Welcome, {user?.full_name || user?.email}</span>
+                <span className="text-gray-700">
+                  {user?.full_name || user?.email}
+                </span>
                 <button
                   onClick={handleLogout}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   Logout
                 </button>

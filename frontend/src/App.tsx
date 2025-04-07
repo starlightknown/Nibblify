@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Navbar from './components/layout/Navbar';
 import DocumentList from './components/documents/DocumentList';
 import Login from './pages/Login';
+import Register from './pages/Register';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import DocumentForm from './components/documents/DocumentForm';
 
 const queryClient = new QueryClient();
 
@@ -16,7 +19,31 @@ function App() {
           <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/documents" element={<DocumentList />} />
+              <Route path="/register" element={<Register />} />
+              <Route 
+                path="/documents" 
+                element={
+                  <ProtectedRoute>
+                    <DocumentList />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route
+                path="/documents/new"
+                element={
+                  <ProtectedRoute>
+                    <DocumentForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <DocumentForm />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/" element={<Navigate to="/documents" replace />} />
             </Routes>
           </main>
