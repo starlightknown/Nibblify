@@ -11,5 +11,4 @@ class User(Base):
     is_superuser = Column(Boolean(), default=False)
     
     # Knowledge Base Relationships
-    documents = relationship("Document", back_populates="user")
-    tags = relationship("Tag", back_populates="user") 
+    documents = relationship("Document", back_populates="user") 

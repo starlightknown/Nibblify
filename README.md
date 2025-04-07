@@ -16,9 +16,7 @@ A production-ready FastAPI application with authentication system and personal k
 ### Knowledge Base
 - Document management (create, read, update, delete)
 - File uploads (PDF, text, etc.)
-- AI-powered tagging using OpenAI
 - Full-text search with Elasticsearch
-- Manual and automatic tagging
 - Document archiving
 
 ## Setup
@@ -81,8 +79,6 @@ Once the application is running, you can access:
 - `PUT /api/v1/knowledge/documents/{document_id}`: Update a document
 - `DELETE /api/v1/knowledge/documents/{document_id}`: Delete a document
 - `POST /api/v1/knowledge/documents/search`: Search documents
-- `POST /api/v1/knowledge/tags`: Create a new tag
-- `GET /api/v1/knowledge/tags`: List all tags
 
 ## Security
 
@@ -102,7 +98,6 @@ Once the application is running, you can access:
 - Implement authentication flow
 - Build document management interface
 - Create search interface with filters
-- Develop tag management UI
 
 ### Browser Extension
 - Create a browser extension for quick saving

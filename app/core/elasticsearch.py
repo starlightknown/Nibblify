@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
 from elasticsearch import Elasticsearch
 from app.core.config import settings
-from app.models.knowledge import Document, Tag, AITag
+from app.models.knowledge import Document
 
 class ElasticsearchService:
     def __init__(self):
@@ -25,16 +25,13 @@ class ElasticsearchService:
                             "url": {"type": "keyword"},
                             "created_at": {"type": "date"},
                             "updated_at": {"type": "date"},
-                            "is_archived": {"type": "boolean"},
-                            "tags": {"type": "keyword"},
-                            "ai_tags": {"type": "keyword"},
-                            "ai_tag_confidences": {"type": "float"}
+                            "is_archived": {"type": "boolean"}
                         }
                     }
                 }
             )
 
-    def index_document(self, document: Document, tags: List[Tag], ai_tags: List[AITag]):
+    def index_document(self, document: Document):
         """Index a document in Elasticsearch"""
         doc_data = {
             "id": document.id,
@@ -45,10 +42,7 @@ class ElasticsearchService:
             "url": str(document.url) if document.url else None,
             "created_at": document.created_at.isoformat() if document.created_at else None,
             "updated_at": document.updated_at.isoformat() if document.updated_at else None,
-            "is_archived": document.is_archived,
-            "tags": [tag.name for tag in tags],
-            "ai_tags": [tag.name for tag in ai_tags],
-            "ai_tag_confidences": {tag.name: tag.confidence/100 for tag in ai_tags if tag.confidence}
+            "is_archived": document.is_archived
         }
         
         self.es.index(index=self.index_name, id=document.id, body=doc_data)
@@ -70,7 +64,7 @@ class ElasticsearchService:
             must.append({
                 "multi_match": {
                     "query": query,
-                    "fields": ["title^3", "content", "tags^2", "ai_tags^2"],
+                    "fields": ["title^3", "content"],
                     "type": "best_fields",
                     "fuzziness": "AUTO"
                 }
@@ -79,9 +73,7 @@ class ElasticsearchService:
         # Add filters if provided
         if filters:
             for key, value in filters.items():
-                if key == "tags":
-                    must.append({"terms": {"tags": value}})
-                elif key == "file_type":
+                if key == "file_type":
                     must.append({"term": {"file_type": value}})
                 elif key == "is_archived":
                     must.append({"term": {"is_archived": value}})

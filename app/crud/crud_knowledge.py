@@ -1,10 +1,9 @@
 from typing import List, Optional, Union, Dict, Any
 from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
-from app.models.knowledge import Document, Tag, AITag
-from app.schemas.knowledge import DocumentCreate, DocumentUpdate, TagCreate, AITagCreate
+from app.models.knowledge import Document
+from app.schemas.knowledge import DocumentCreate, DocumentUpdate
 from app.core.elasticsearch import es_service
-from app.core.ai_tagging import ai_tagging_service
 import os
 
 class CRUDDocument(CRUDBase[Document, DocumentCreate, DocumentUpdate]):
@@ -25,32 +24,8 @@ class CRUDDocument(CRUDBase[Document, DocumentCreate, DocumentUpdate]):
         db.commit()
         db.refresh(db_obj)
         
-        # Add tags if provided
-        tags = []
-        if obj_in.tag_ids:
-            tags = db.query(Tag).filter(Tag.id.in_(obj_in.tag_ids)).all()
-            db_obj.tags = tags
-        
-        # Generate AI tags
-        content = obj_in.content
-        if not content and obj_in.file_path:
-            content = ai_tagging_service.extract_content_from_file(obj_in.file_path)
-            
-        ai_tags = []
-        if content:
-            ai_tag_creates = ai_tagging_service.generate_tags(obj_in.title, content)
-            for tag_create in ai_tag_creates:
-                ai_tag = AITag(
-                    name=tag_create.name,
-                    confidence=tag_create.confidence,
-                    document_id=db_obj.id
-                )
-                db.add(ai_tag)
-                ai_tags.append(ai_tag)
-            db.commit()
-        
         # Index in Elasticsearch
-        es_service.index_document(db_obj, tags, ai_tags)
+        es_service.index_document(db_obj)
         
         return db_obj
     
@@ -61,19 +36,12 @@ class CRUDDocument(CRUDBase[Document, DocumentCreate, DocumentUpdate]):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
-            
-        # Update tags if provided
-        if "tag_ids" in update_data:
-            tag_ids = update_data.pop("tag_ids")
-            if tag_ids is not None:
-                tags = db.query(Tag).filter(Tag.id.in_(tag_ids)).all()
-                db_obj.tags = tags
         
         # Update document
         document = super().update(db, db_obj=db_obj, obj_in=update_data)
         
         # Re-index in Elasticsearch
-        es_service.index_document(document, document.tags, document.ai_tags)
+        es_service.index_document(document)
         
         return document
     
@@ -133,32 +101,4 @@ class CRUDDocument(CRUDBase[Document, DocumentCreate, DocumentUpdate]):
             "limit": limit
         }
 
-class CRUDTag(CRUDBase[Tag, TagCreate, TagCreate]):
-    def create_with_user(
-        self, db: Session, *, obj_in: TagCreate, user_id: int
-    ) -> Tag:
-        db_obj = Tag(
-            name=obj_in.name,
-            user_id=user_id
-        )
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
-    
-    def get_by_name(self, db: Session, *, name: str, user_id: int) -> Optional[Tag]:
-        return db.query(Tag).filter(Tag.name == name, Tag.user_id == user_id).first()
-    
-    def get_multi_by_user(
-        self, db: Session, *, user_id: int, skip: int = 0, limit: int = 100
-    ) -> List[Tag]:
-        return (
-            db.query(Tag)
-            .filter(Tag.user_id == user_id)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
-
-document = CRUDDocument(Document)
-tag = CRUDTag(Tag) 
+document = CRUDDocument(Document) 

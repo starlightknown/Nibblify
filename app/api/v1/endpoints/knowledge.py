@@ -31,7 +31,6 @@ async def upload_document(
     db: Session = Depends(deps.get_db),
     file: UploadFile = File(...),
     title: str = Form(...),
-    tag_ids: Optional[List[int]] = Form(None),
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
@@ -55,7 +54,6 @@ async def upload_document(
         title=title,
         file_path=file_path,
         file_type=file_ext[1:],  # Remove the dot
-        tag_ids=tag_ids or []
     )
     
     document = crud.document.create_with_user(
@@ -152,42 +150,4 @@ def search_documents(
         page=query.page,
         limit=query.limit
     )
-    return result
-
-# Tag endpoints
-@router.post("/tags", response_model=schemas.Tag)
-def create_tag(
-    *,
-    db: Session = Depends(deps.get_db),
-    tag_in: schemas.TagCreate,
-    current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Create new tag.
-    """
-    # Check if tag already exists
-    existing_tag = crud.tag.get_by_name(
-        db=db, name=tag_in.name, user_id=current_user.id
-    )
-    if existing_tag:
-        return existing_tag
-        
-    tag = crud.tag.create_with_user(
-        db=db, obj_in=tag_in, user_id=current_user.id
-    )
-    return tag
-
-@router.get("/tags", response_model=List[schemas.Tag])
-def read_tags(
-    db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Retrieve tags.
-    """
-    tags = crud.tag.get_multi_by_user(
-        db=db, user_id=current_user.id, skip=skip, limit=limit
-    )
-    return tags 
+    return result 
