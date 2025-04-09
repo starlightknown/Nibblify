@@ -34,6 +34,15 @@ const documentsApi = {
       limit
     });
     return response.data;
+  },
+
+  upload: async (formData: FormData): Promise<Document> => {
+    const response = await client.post<Document>('/knowledge/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   }
 };
 

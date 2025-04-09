@@ -6,6 +6,8 @@ from app.api import deps
 import os
 import uuid
 from app.core.config import settings
+from PyPDF2 import PdfReader
+import io
 
 router = APIRouter()
 
@@ -30,36 +32,53 @@ async def upload_document(
     *,
     db: Session = Depends(deps.get_db),
     file: UploadFile = File(...),
-    title: str = Form(...),
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Upload a document file.
+    Upload and create a document from a PDF file.
     """
+    if not file.filename.endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    
     # Create upload directory if it doesn't exist
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     
     # Generate unique filename
-    file_ext = os.path.splitext(file.filename)[1]
-    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_extension = os.path.splitext(file.filename)[1]
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
     file_path = os.path.join(settings.UPLOAD_DIR, unique_filename)
     
-    # Save file
-    with open(file_path, "wb") as buffer:
-        content = await file.read()
-        buffer.write(content)
-    
-    # Create document
-    document_in = schemas.DocumentCreate(
-        title=title,
-        file_path=file_path,
-        file_type=file_ext[1:],  # Remove the dot
-    )
-    
-    document = crud.document.create_with_user(
-        db=db, obj_in=document_in, user_id=current_user.id
-    )
-    return document
+    try:
+        # Save the file
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        # Extract text from PDF
+        pdf_reader = PdfReader(io.BytesIO(content))
+        text_content = ""
+        for page in pdf_reader.pages:
+            text_content += page.extract_text() + "\n"
+        
+        # Create document
+        document_in = schemas.DocumentCreate(
+            title=os.path.splitext(file.filename)[0],
+            content=text_content,
+            file_path=file_path,
+            file_type="pdf",
+            is_archived=False
+        )
+        
+        document = crud.document.create_with_user(
+            db=db, obj_in=document_in, user_id=current_user.id
+        )
+        return document
+        
+    except Exception as e:
+        # Clean up file if something goes wrong
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
 
 @router.get("/documents", response_model=List[schemas.Document])
 def read_documents(

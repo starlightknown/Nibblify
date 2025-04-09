@@ -7,6 +7,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Documents from './pages/Documents';
 import DocumentForm from './components/documents/DocumentForm';
+import UploadDocument from './components/documents/UploadDocument';
+import DocumentView from './components/documents/DocumentView';
 import PrivateRoute from './components/PrivateRoute';
 
 const queryClient = new QueryClient();
@@ -35,6 +37,22 @@ const App: React.FC = () => {
                   element={
                     <PrivateRoute>
                       <DocumentForm />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/documents/upload"
+                  element={
+                    <PrivateRoute>
+                      <UploadDocument />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/documents/:id"
+                  element={
+                    <PrivateRoute>
+                      <DocumentView />
                     </PrivateRoute>
                   }
                 />
