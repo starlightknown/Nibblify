@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import documentsApi, { Document } from '../../api/documents';
+import documentsApi from '../../api/documents';
+import { Document } from '../../types/document';
 
 const DocumentList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -13,13 +14,13 @@ const DocumentList: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => documentsApi.delete(id),
+    mutationFn: (id: number) => documentsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
     }
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     if (window.confirm('Are you sure you want to delete this document?')) {
       deleteMutation.mutate(id);
     }

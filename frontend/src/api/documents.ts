@@ -1,23 +1,5 @@
 import client from './client';
-
-export interface Document {
-  id: string;
-  title: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-}
-
-export interface CreateDocumentInput {
-  title: string;
-  content: string;
-}
-
-export interface UpdateDocumentInput {
-  title?: string;
-  content?: string;
-}
+import { Document, CreateDocumentInput, UpdateDocumentInput, SearchResult } from '../types/document';
 
 const documentsApi = {
   getAll: async (): Promise<Document[]> => {
@@ -25,7 +7,7 @@ const documentsApi = {
     return response.data;
   },
 
-  getById: async (id: string): Promise<Document> => {
+  getById: async (id: number | string): Promise<Document> => {
     const response = await client.get<Document>(`/knowledge/documents/${id}`);
     return response.data;
   },
@@ -35,17 +17,22 @@ const documentsApi = {
     return response.data;
   },
 
-  update: async (id: string, data: UpdateDocumentInput): Promise<Document> => {
+  update: async (id: number | string, data: UpdateDocumentInput): Promise<Document> => {
     const response = await client.put<Document>(`/knowledge/documents/${id}`, data);
     return response.data;
   },
 
-  delete: async (id: string): Promise<void> => {
+  delete: async (id: number | string): Promise<void> => {
     await client.delete(`/knowledge/documents/${id}`);
   },
 
-  search: async (query: string): Promise<Document[]> => {
-    const response = await client.get<Document[]>(`/knowledge/documents/search?q=${encodeURIComponent(query)}`);
+  search: async (query: string, filters?: Record<string, any>, page: number = 1, limit: number = 20): Promise<SearchResult> => {
+    const response = await client.post<SearchResult>('/knowledge/documents/search', {
+      query,
+      filters,
+      page,
+      limit
+    });
     return response.data;
   }
 };

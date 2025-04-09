@@ -26,7 +26,8 @@ const Register: React.FC = () => {
       }
     },
     onError: (err: any) => {
-      setError(err.message || 'Registration failed');
+      console.error('Registration error:', err);
+      setError(err.response?.data?.detail || 'Registration failed');
     }
   });
 

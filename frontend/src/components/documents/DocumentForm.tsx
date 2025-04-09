@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import documentsApi, { Document, CreateDocumentInput, UpdateDocumentInput } from '../../api/documents';
+import documentsApi from '../../api/documents';
+import { Document, CreateDocumentInput, UpdateDocumentInput } from '../../types/document';
 
 const DocumentForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();

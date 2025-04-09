@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
 from app.models.knowledge import Document
 from app.schemas.knowledge import DocumentCreate, DocumentUpdate
-from app.core.elasticsearch import es_service
 import os
 
 class CRUDDocument(CRUDBase[Document, DocumentCreate, DocumentUpdate]):
@@ -23,10 +22,6 @@ class CRUDDocument(CRUDBase[Document, DocumentCreate, DocumentUpdate]):
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
-        
-        # Index in Elasticsearch
-        es_service.index_document(db_obj)
-        
         return db_obj
     
     def update_with_user(
@@ -39,10 +34,6 @@ class CRUDDocument(CRUDBase[Document, DocumentCreate, DocumentUpdate]):
         
         # Update document
         document = super().update(db, db_obj=db_obj, obj_in=update_data)
-        
-        # Re-index in Elasticsearch
-        es_service.index_document(document)
-        
         return document
     
     def remove_with_user(self, db: Session, *, id: int, user_id: int) -> Document:
@@ -51,9 +42,6 @@ class CRUDDocument(CRUDBase[Document, DocumentCreate, DocumentUpdate]):
             # Delete file if exists
             if obj.file_path and os.path.exists(obj.file_path):
                 os.remove(obj.file_path)
-                
-            # Delete from Elasticsearch
-            es_service.delete_document(obj.id)
             
             # Delete from database
             db.delete(obj)
@@ -75,30 +63,6 @@ class CRUDDocument(CRUDBase[Document, DocumentCreate, DocumentUpdate]):
         self, db: Session, *, user_id: int, query: str, filters: Optional[Dict[str, Any]] = None,
         page: int = 1, limit: int = 20
     ) -> Dict[str, Any]:
-        # Search in Elasticsearch
-        search_result = es_service.search_documents(
-            user_id=user_id,
-            query=query,
-            filters=filters,
-            page=page,
-            limit=limit
-        )
-        
-        # Get documents from database
-        if search_result["doc_ids"]:
-            documents = (
-                db.query(self.model)
-                .filter(self.model.id.in_(search_result["doc_ids"]))
-                .all()
-            )
-        else:
-            documents = []
-            
-        return {
-            "documents": documents,
-            "total": search_result["total"],
-            "page": page,
-            "limit": limit
-        }
+        return Document.search(db, user_id, query, filters, page, limit)
 
 document = CRUDDocument(Document) 

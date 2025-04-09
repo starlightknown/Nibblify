@@ -12,13 +12,6 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "nibblify"
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
 
-    # Elasticsearch settings
-    ELASTICSEARCH_URL: Optional[str] = None
-    ELASTICSEARCH_HOST: str = "localhost"
-    ELASTICSEARCH_PORT: int = 9200
-    ELASTICSEARCH_USERNAME: Optional[str] = None
-    ELASTICSEARCH_PASSWORD: Optional[str] = None
-
     # OpenAI settings
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_MODEL: str = "gpt-3.5-turbo"
@@ -48,21 +41,5 @@ class Settings(BaseSettings):
             return v
         db_name = values.get("POSTGRES_DB", "")
         return f"postgresql://{values.get('POSTGRES_USER')}:{values.get('POSTGRES_PASSWORD')}@{values.get('POSTGRES_SERVER')}/{db_name}"
-
-    @validator("ELASTICSEARCH_HOST", pre=True)
-    def parse_elasticsearch_host(cls, v: Any, values: Dict[str, Any]) -> Any:
-        if "ELASTICSEARCH_URL" in values and values["ELASTICSEARCH_URL"]:
-            from urllib.parse import urlparse
-            url = urlparse(values["ELASTICSEARCH_URL"])
-            return url.hostname
-        return v
-
-    @validator("ELASTICSEARCH_PORT", pre=True)
-    def parse_elasticsearch_port(cls, v: Any, values: Dict[str, Any]) -> Any:
-        if "ELASTICSEARCH_URL" in values and values["ELASTICSEARCH_URL"]:
-            from urllib.parse import urlparse
-            url = urlparse(values["ELASTICSEARCH_URL"])
-            return url.port or 9200
-        return v
 
 settings = Settings() 
