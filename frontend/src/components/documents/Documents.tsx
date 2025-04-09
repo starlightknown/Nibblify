@@ -63,10 +63,10 @@ const Documents: React.FC = () => {
                   </Link>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {document.type}
+                  {document.file_type || 'Text Document'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {format(new Date(document.createdAt), 'MMM d, yyyy')}
+                  {format(new Date(document.created_at), 'MMM d, yyyy')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button className="text-red-600 hover:text-red-900">Delete</button>

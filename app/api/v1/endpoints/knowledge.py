@@ -1,5 +1,6 @@
 from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.api import deps
@@ -169,4 +170,35 @@ def search_documents(
         page=query.page,
         limit=query.limit
     )
-    return result 
+    return result
+
+@router.get("/documents/{document_id}/file")
+async def get_document_file(
+    *,
+    db: Session = Depends(deps.get_db),
+    document_id: int,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get document file by ID.
+    """
+    document = crud.document.get(db=db, id=document_id)
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if document.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    if not document.file_path or not os.path.exists(document.file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    headers = {
+        "Content-Disposition": f'attachment; filename="{document.title}.pdf"',
+        "Content-Type": "application/pdf",
+        "Access-Control-Expose-Headers": "Content-Disposition"
+    }
+    
+    return FileResponse(
+        document.file_path,
+        media_type="application/pdf",
+        filename=f"{document.title}.pdf",
+        headers=headers
+    ) 

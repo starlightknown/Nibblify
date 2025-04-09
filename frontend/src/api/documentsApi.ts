@@ -3,10 +3,13 @@ import axios from 'axios';
 export interface Document {
   id: string;
   title: string;
-  type: string;
-  content?: string;
-  createdAt: string;
-  updatedAt: string;
+  content: string;
+  file_path?: string;
+  file_type?: string;
+  created_at: string;
+  updated_at?: string;
+  user_id?: number;
+  is_archived?: boolean;
 }
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -22,7 +25,7 @@ export const documentsApi = {
     return response.data;
   },
 
-  create: async (document: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>): Promise<Document> => {
+  create: async (document: Omit<Document, 'id' | 'created_at' | 'updated_at'>): Promise<Document> => {
     const response = await axios.post(`${API_URL}/documents`, document);
     return response.data;
   },

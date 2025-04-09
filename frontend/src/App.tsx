@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/layout/Navbar';
+import MainLayout from './components/layout/MainLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Documents from './pages/Documents';
@@ -18,56 +18,30 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-gray-100">
-            <Navbar />
-            <main className="container mx-auto px-4 py-8">
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route
-                  path="/documents"
-                  element={
-                    <PrivateRoute>
-                      <Documents />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/documents/new"
-                  element={
-                    <PrivateRoute>
-                      <DocumentForm />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/documents/upload"
-                  element={
-                    <PrivateRoute>
-                      <UploadDocument />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/documents/:id"
-                  element={
-                    <PrivateRoute>
-                      <DocumentView />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="/documents/:id/edit"
-                  element={
-                    <PrivateRoute>
-                      <DocumentForm />
-                    </PrivateRoute>
-                  }
-                />
-                <Route path="/" element={<Login />} />
-              </Routes>
-            </main>
-          </div>
+          <Routes>
+            {/* Auth routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            {/* Protected routes with layout */}
+            <Route
+              path="/*"
+              element={
+                <PrivateRoute>
+                  <MainLayout>
+                    <Routes>
+                      <Route path="/documents" element={<Documents />} />
+                      <Route path="/documents/new" element={<DocumentForm />} />
+                      <Route path="/documents/upload" element={<UploadDocument />} />
+                      <Route path="/documents/:id" element={<DocumentView />} />
+                      <Route path="/documents/:id/edit" element={<DocumentForm />} />
+                      <Route path="/" element={<Documents />} />
+                    </Routes>
+                  </MainLayout>
+                </PrivateRoute>
+              }
+            />
+          </Routes>
         </Router>
       </AuthProvider>
     </QueryClientProvider>
